@@ -102,6 +102,7 @@ button{background:#2563eb;font-weight:700;cursor:pointer;touch-action: manipulat
 
 <div id="list" class="card hidden"><h2>All Invoices</h2><div id="invoiceList"></div></div>
 
+<!-- FIXED EDIT MODAL -->
 <div id="editModal" class="modal" onclick="closeModal(event)">
   <div class="modal-card" onclick="event.stopPropagation()">
     <h2>Edit WiFi Client</h2>
@@ -121,6 +122,7 @@ button{background:#2563eb;font-weight:700;cursor:pointer;touch-action: manipulat
       <option value="Custom">Custom Package</option>
     </select>
     <div class="label">Router Link / Portal</div><input id="editApp" placeholder="http://192.168.1.1 or client portal link">
+    <div class="label">Client Website Link</div><input id="editWebsite" placeholder="https://yourwebsite.github.io/...">
 
     <div class="label">Contract PDF</div>
     <input type="file" id="contractUpload" accept=".pdf">
@@ -173,7 +175,6 @@ function closeModal(e){if(!e||e.target.id==='editModal')editModal.classList.remo
 async function saveClient(){
   let data={name:editName.value,whatsapp:editWhatsapp.value,whatsapp2:editWhatsapp2.value,email:editEmail.value,address:editAddress.value,gps:editGPS.value,package:editPackage.value,appLink:editApp.value,websiteLink:editWebsite.value};
 
-  // UPLOAD CONTRACT PDF
   let file = contractUpload.files[0];
   if(file){
     let storageRef = storage.ref(`contracts/${editingClientId}_${Date.now()}_${file.name}`);
@@ -223,9 +224,9 @@ async function genInvoice(){
 
 async function createPDF(invNum,client,clientEmail,clientAddress,clientGPS,clientPhone,clientPhone2,items,subtotal,discount,vat,total,useVAT,notes,isPaid){const { jsPDF }=window.jspdf; const doc=new jsPDF(); try{const logoImg=await fetch(COMPANY.logo).then(r=>r.blob()).then(b=>new Promise(r=>{let rd=new FileReader();rd.onload=()=>r(rd.result);rd.readAsDataURL(b);}));doc.addImage(logoImg,'JPEG',164,15,25,25);}catch(e){} if(isPaid){doc.setFontSize(50);doc.setTextColor(16,185,129);doc.text('PAID',65,140,{angle:-30});doc.setFontSize(11);doc.text('Paid on: '+new Date().toLocaleDateString('en-ZA'),70,155,{angle:-30});doc.setTextColor(0);} doc.setFontSize(24);doc.setFont(undefined,'bold');doc.text(useVAT?'TAX INVOICE':'INVOICE',20,25); doc.setDrawColor(37,99,235);doc.setLineWidth(0.5);doc.rect(20,55,90,45);doc.setFontSize(10);doc.setFont(undefined,'bold');doc.text(COMPANY.name,23,62);doc.setFont(undefined,'normal');doc.text(COMPANY.address,23,69);doc.text('Email: '+COMPANY.email,23,76);doc.text('Tel: '+COMPANY.phone,23,83);if(useVAT)doc.text('VAT: '+COMPANY.vat+' | Reg: '+COMPANY.reg,23,90);doc.text('Bank: '+COMPANY.bank+' Acc: '+COMPANY.acc,23,97);doc.rect(120,55,70,45);doc.setFont(undefined,'bold');doc.text('INVOICE NO:',123,62);doc.text('DATE:',123,69);doc.text('DUE DATE:',123,76);doc.setFont(undefined,'normal');doc.text(invNum,160,62);let today=new Date();let due=new Date(today);due.setDate(today.getDate()+7);doc.text(today.toLocaleDateString('en-ZA'),160,69);doc.text(due.toLocaleDateString('en-ZA'),160,76); doc.setFontSize(11);doc.setFont(undefined,'bold');doc.text('BILL TO:',20,115);doc.setFont(undefined,'normal');doc.text(client.name,20,122);if(clientPhone)doc.text('Tel 1: '+clientPhone,20,129); if(clientPhone2)doc.text('Tel 2: '+clientPhone2,20,136); if(clientEmail)doc.text('Email: '+clientEmail,20,143);if(clientAddress){let addr=doc.splitTextToSize('Address: '+clientAddress,90);doc.text(addr,20,150);} if(clientGPS){doc.text('GPS: '+clientGPS,20,160);} let y=175;doc.setFillColor(37,99,235);doc.rect(20,y,170,8,'F');doc.setTextColor(255,255,255);doc.setFont(undefined,'bold');doc.text('#',23,y+6);doc.text('DESCRIPTION',35,y+6);doc.text('AMOUNT',170,y+6);doc.setTextColor(0);y+=12;doc.setFont(undefined,'normal');items.forEach((it,idx)=>{doc.text(String(idx+1),23,y);let d=doc.splitTextToSize(it.desc,120);doc.text(d,35,y);doc.text('R'+it.price.toFixed(2),170,y);y+=d.length*5+3;doc.line(20,y,190,y);y+=5;}); y+=5;doc.text('Subtotal:',140,y);doc.text('R'+subtotal,170,y);y+=7;if(parseFloat(discount)>0){doc.setTextColor(220,38,38);doc.text('Discount:',140,y);doc.text('-R'+discount,170,y);doc.setTextColor(0);y+=7;} if(useVAT){doc.text('VAT 15%:',140,y);doc.text('R'+vat,170,y);y+=7;} doc.setLineWidth(0.8);doc.line(140,y,190,y);y+=5;doc.setFontSize(14);doc.setFont(undefined,'bold');doc.text('TOTAL DUE:',140,y);doc.text('R'+total,170,y); y+=20;if(notes){doc.setFontSize(10);doc.setFont(undefined,'bold');doc.text('NOTES / PAYMENT TERMS:',20,y);doc.setFont(undefined,'normal');let n=doc.splitTextToSize(notes,170);doc.text(n,20,y+7);} doc.setFontSize(8);doc.setTextColor(100);doc.line(20,280,190,280);doc.text('Thank you for choosing '+COMPANY.name+' - Twinz WIFI',105,287,{align:'center'});
   let fileName = invNum+'-'+client.name.replace(/\s/g,'_')+'.pdf';
-  doc.save(fileName); // 1. SAVE/DOWNLOAD
-  doc.autoPrint(); // 2. PRINT
-  window.open(doc.output('bloburl'), '_blank'); // 3. OPEN
+  doc.save(fileName);
+  doc.autoPrint();
+  window.open(doc.output('bloburl'), '_blank');
 }
 
 async function deleteInvoice(id){if(confirm('Delete this invoice permanently?')){await db.collection('twinz_invoices').doc(id).delete();}}

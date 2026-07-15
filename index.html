@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Twinz WIFI V3.5.1</title>
+<title>Twinz WIFI V3.5.2</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -19,7 +19,7 @@ h2{font-size:18px;margin-bottom:14px;color:#e5e7eb}
 .sub{color:#9ca3af;font-size:13px;margin-bottom:18px}
 input,textarea,select,button{width:100%;padding:13px;border-radius:10px;border:1px solid #374151;background:#0a0a0a;color:#f1f5f9;margin-bottom:11px;font-size:16px}
 button{background:#2563eb;font-weight:700;cursor:pointer;touch-action: manipulation;}
-.btn-green{background:#16a34a}.btn-red{background:#dc2626}.btn-yellow{background:#ca8a04}.btn-blue{background:#0ea5e9}
+.btn-green{background:#16a34a}.btn-red{background:#dc2626}.btn-yellow{background:#ca8a04}.btn-blue{background:#0ea5e9}.btn-purple{background:#7c3aed}
 .hidden{display:none}.tabs{display:flex;gap:8px;margin-bottom:18px;overflow-x:auto}
 .tab{flex:1;min-width:110px;padding:11px;background:#1f2937;border-radius:10px;text-align:center;cursor:pointer;font-weight:600;font-size:14px;touch-action: manipulation;}
 .tab.active{background:#2563eb}
@@ -58,7 +58,7 @@ button{background:#2563eb;font-weight:700;cursor:pointer;touch-action: manipulat
 </div>
 
 <div id="app" class="hidden">
-<div class="top-bar"><h1><img src="https://files.catbox.moe/0zympr.jpeg" class="logo"> Twinz WIFI V3.5.1</h1><button id="logoutBtn" class="logout-btn">Logout</button></div>
+<div class="top-bar"><h1><img src="https://files.catbox.moe/0zympr.jpeg" class="logo"> Twinz WIFI V3.5.2</h1><button id="logoutBtn" class="logout-btn">Logout</button></div>
 <div class="sub">ISP & WiFi Solutions | VAT: 9819040198</div>
 
 <div class="tabs">
@@ -118,6 +118,8 @@ button{background:#2563eb;font-weight:700;cursor:pointer;touch-action: manipulat
     </select>
     <div class="label">Router Link / Portal</div><input id="editApp" placeholder="http://192.168.1.1 or client portal link">
     <div class="label">GPS Location Link</div><input id="editWebsite" placeholder="https://maps.google.com/...">
+    <div class="label">Upload Contract PDF</div><input type="file" id="contractUpload" accept=".pdf">
+    <div id="contractLink" style="font-size:12px;color:#60a5fa;margin-bottom:10px"></div>
     <button class="btn-green" onclick="saveClient()">Save</button>
     <button class="btn-red" onclick="deleteClient()">Delete</button>
     <button class="btn-blue" onclick="closeModal()">Cancel</button>
@@ -150,33 +152,46 @@ function formatSA(wa){ let num = wa.replace(/\D/g,''); if(num.startsWith('0')) n
 function getBadge(pkg){ if(pkg.includes('590')) return 'badge-590'; if(pkg.includes('790')) return 'badge-790'; if(pkg.includes('990')) return 'badge-990'; if(pkg.includes('1290')) return 'badge-1290'; return 'badge-custom'; }
 
 function loadData(){db.collection('twinz_clients').onSnapshot(s=>{clients=s.docs.map(d=>({id:d.id,...d.data()}));renderClients();loadSelect();}); db.collection('twinz_invoices').onSnapshot(s=>{invoices=s.docs.map(d=>({id:d.id,...d.data()}));renderInvoices();});}
-async function addClient(){let n=prompt('Client Name:'),w1=prompt('Phone Number 1:'),w2=prompt('Phone Number 2 - Backup:'),e=prompt('Client Email:'),a=prompt('Installation Address:'),p=prompt('Package R590/R790/R990/R1290:');if(n&&w1)await db.collection('twinz_clients').add({name:n,whatsapp:w1,whatsapp2:w2,email:e,address:a,package:p||'R590',appLink:'',websiteLink:'',portalId:Math.random().toString(36).substr(2,9)});}
-function renderClients(){clientList.innerHTML=clients.map(c=>`<div class="client-folder"><h3>${c.name} <span class="badge ${getBadge(c.package||'R590')}">${c.package||'R590'}</span></h3><div style="color:#9ca3af;font-size:13px;margin-bottom:10px">${c.whatsapp} ${c.whatsapp2?' | '+c.whatsapp2:''} | ${c.email}</div>${c.address?`<div style="color:#6b7280;font-size:12px;margin-bottom:10px">📍 ${c.address}</div>`:''}<div class="link-box">${c.appLink?`<a href="${c.appLink}" target="_blank">📡 Router</a>`:''}${c.websiteLink?`<a href="${c.websiteLink}" target="_blank">📍 GPS</a>`:''}</div><div class="client-actions"><button class="btn-blue" onclick="editClient('${c.id}')">Edit Client</button></div></div>`).join('')||'<div>No clients</div>';}
-function editClient(id){editingClientId=id; editingClientData=clients.find(c=>c.id==id); editName.value=editingClientData.name||''; editWhatsapp.value=editingClientData.whatsapp||''; editWhatsapp2.value=editingClientData.whatsapp2||''; editEmail.value=editingClientData.email||''; editAddress.value=editingClientData.address||''; editPackage.value=editingClientData.package||'R590'; editApp.value=editingClientData.appLink||''; editWebsite.value=editingClientData.websiteLink||''; editModal.classList.add('active');}
+async function addClient(){let n=prompt('Client Name:'),w1=prompt('Phone Number 1:'),w2=prompt('Phone Number 2 - Backup:'),e=prompt('Client Email:'),a=prompt('Installation Address:'),p=prompt('Package R590/R790/R990/R1290:');if(n&&w1)await db.collection('twinz_clients').add({name:n,whatsapp:w1,whatsapp2:w2,email:e,address:a,package:p||'R590',appLink:'',websiteLink:'',contractUrl:'',portalId:Math.random().toString(36).substr(2,9)});}
+function renderClients(){clientList.innerHTML=clients.map(c=>`<div class="client-folder"><h3>${c.name} <span class="badge ${getBadge(c.package||'R590')}">${c.package||'R590'}</span></h3><div style="color:#9ca3af;font-size:13px;margin-bottom:10px">${c.whatsapp} ${c.whatsapp2?' | '+c.whatsapp2:''} | ${c.email}</div>${c.address?`<div style="color:#6b7280;font-size:12px;margin-bottom:10px">📍 ${c.address}</div>`:''}<div class="link-box">${c.appLink?`<a href="${c.appLink}" target="_blank">📡 Router</a>`:''}${c.websiteLink?`<a href="${c.websiteLink}" target="_blank">📍 GPS</a>`:''}${c.contractUrl?`<a href="${c.contractUrl}" target="_blank">📄 Contract</a>`:''}</div><div class="client-actions"><button class="btn-blue" onclick="editClient('${c.id}')">Edit Client</button></div></div>`).join('')||'<div>No clients</div>';}
+function editClient(id){editingClientId=id; editingClientData=clients.find(c=>c.id==id); editName.value=editingClientData.name||''; editWhatsapp.value=editingClientData.whatsapp||''; editWhatsapp2.value=editingClientData.whatsapp2||''; editEmail.value=editingClientData.email||''; editAddress.value=editingClientData.address||''; editPackage.value=editingClientData.package||'R590'; editApp.value=editingClientData.appLink||''; editWebsite.value=editingClientData.websiteLink||''; contractLink.innerHTML = editingClientData.contractUrl? `<a href="${editingClientData.contractUrl}" target="_blank">View Current Contract</a>` : 'No contract uploaded'; editModal.classList.add('active');}
 function closeModal(e){if(!e||e.target.id==='editModal')editModal.classList.remove('active');}
-async function saveClient(){let data={name:editName.value,whatsapp:editWhatsapp.value,whatsapp2:editWhatsapp2.value,email:editEmail.value,address:editAddress.value,package:editPackage.value,appLink:editApp.value,websiteLink:editWebsite.value}; if(data.name&&data.whatsapp){await db.collection('twinz_clients').doc(editingClientId).update(data); closeModal();}}
+
+async function saveClient(){
+  let data={name:editName.value,whatsapp:editWhatsapp.value,whatsapp2:editWhatsapp2.value,email:editEmail.value,address:editAddress.value,package:editPackage.value,appLink:editApp.value,websiteLink:editWebsite.value};
+
+  // UPLOAD CONTRACT PDF
+  let file = contractUpload.files[0];
+  if(file){
+    let storageRef = storage.ref(`contracts/${editingClientId}_${file.name}`);
+    await storageRef.put(file);
+    data.contractUrl = await storageRef.getDownloadURL();
+  }
+
+  if(data.name&&data.whatsapp){await db.collection('twinz_clients').doc(editingClientId).update(data); closeModal(); alert('Client Saved!');}
+}
+
 async function deleteClient(){if(confirm('Delete client?')){await db.collection('twinz_clients').doc(editingClientId).delete(); closeModal();}}
 function loadSelect(){clientSelect.innerHTML='<option value="">Select Client...</option>'+clients.map(c=>`<option value="${c.id}">${c.name} - ${c.package}</option>`).join(''); clientSelect.onchange=()=>{let c=clients.find(x=>x.id==clientSelect.value); if(c){clientPhone.value=c.whatsapp||''; clientPhone2.value=c.whatsapp2||''; clientEmail.value=c.email||''; clientAddress.value=c.address||''; item0.value='Monthly WiFi '+c.package; price0.value=c.package.replace('R',''); calc();}};}
 function addItem(){items.insertAdjacentHTML('beforeend',`<div class="grid"><input placeholder="Service / Description" id="item${itemCount}"><input type="number" placeholder="Amount R" id="price${itemCount}" oninput="calc()"></div>`);itemCount++;}
 function calc(){let s=0;for(let i=0;i<itemCount;i++)s+=parseFloat(document.getElementById('price'+i)?.value||0);let d=parseFloat(discount.value||0);let after=s-d;if(after<0)after=0; let v=vatToggle.checked?after*0.15:0; vatRow.style.display=vatToggle.checked?'flex':'none'; subtotal.textContent=s.toFixed(2); discountShow.textContent=d.toFixed(2); vat.textContent=v.toFixed(2); total.textContent=(after+v).toFixed(2);}
 
 async function genInvoice(){
-  let cid=clientSelect.value;if(!cid)return alert('Select client first'); 
-  let c=clients.find(x=>x.id==cid); 
-  let phone = clientPhone.value || c.whatsapp; 
+  let cid=clientSelect.value;if(!cid)return alert('Select client first');
+  let c=clients.find(x=>x.id==cid);
+  let phone = clientPhone.value || c.whatsapp;
   if(!phone) return alert('Enter Client Number 1');
-  let num='TCS-'+new Date().getFullYear()+'-'+String(invoices.length+1).padStart(4,'0'); 
-  let itemsArr=[]; for(let i=0;i<itemCount;i++){let desc=document.getElementById('item'+i)?.value; let price=document.getElementById('price'+i)?.value; if(desc&&price)itemsArr.push({desc,price:parseFloat(price)});} 
+  let num='TCS-'+new Date().getFullYear()+'-'+String(invoices.length+1).padStart(4,'0');
+  let itemsArr=[]; for(let i=0;i<itemCount;i++){let desc=document.getElementById('item'+i)?.value; let price=document.getElementById('price'+i)?.value; if(desc&&price)itemsArr.push({desc,price:parseFloat(price)});}
   await createPDF(num,c,clientEmail.value,clientAddress.value,phone,clientPhone2.value,itemsArr,subtotal.textContent,discount.value,vat.textContent,total.textContent,vatToggle.checked,notes.value,false);
-  await db.collection('twinz_invoices').add({num,clientId:cid,clientName:c.name,clientPhone:phone,clientPhone2:clientPhone2.value,items:itemsArr,subtotal:parseFloat(subtotal.textContent),discount:parseFloat(discount.value),vat:parseFloat(vat.textContent),total:parseFloat(total.textContent),useVAT:vatToggle.checked,notes:notes.value,status:'unpaid',date:new Date().toISOString()}); 
-  let waNum = formatSA(phone); 
-  let msg=`Hi ${c.name},\n\n${vatToggle.checked?'TAX INVOICE':'INVOICE'} ${num}\nPackage: ${c.package}\nTotal: R${total.textContent}\nThank you for using Twinz WIFI!`; 
-  window.open(`https://wa.me/${waNum}/?text=${encodeURIComponent(msg)}`); 
+  await db.collection('twinz_invoices').add({num,clientId:cid,clientName:c.name,clientPhone:phone,clientPhone2:clientPhone2.value,items:itemsArr,subtotal:parseFloat(subtotal.textContent),discount:parseFloat(discount.value),vat:parseFloat(vat.textContent),total:parseFloat(total.textContent),useVAT:vatToggle.checked,notes:notes.value,status:'unpaid',date:new Date().toISOString()});
+  let waNum = formatSA(phone);
+  let msg=`Hi ${c.name},\n\n${vatToggle.checked?'TAX INVOICE':'INVOICE'} ${num}\nPackage: ${c.package}\nTotal: R${total.textContent}\nThank you for using Twinz WIFI!`;
+  window.open(`https://wa.me/${waNum}/?text=${encodeURIComponent(msg)}`);
   alert('PDF Downloaded + Print Opened + WhatsApp Opened');
 }
 
-// FIX: DOWNLOAD + AUTO PRINT
-async function createPDF(invNum,client,clientEmail,clientAddress,clientPhone,clientPhone2,items,subtotal,discount,vat,total,useVAT,notes,isPaid){const { jsPDF }=window.jspdf; const doc=new jsPDF(); try{const logoImg=await fetch(COMPANY.logo).then(r=>r.blob()).then(b=>new Promise(r=>{let rd=new FileReader();rd.onload=()=>r(rd.result);rd.readAsDataURL(b);}));doc.addImage(logoImg,'JPEG',164,15,25,25);}catch(e){} if(isPaid){doc.setFontSize(50);doc.setTextColor(16,185,129);doc.text('PAID',65,140,{angle:-30});doc.setFontSize(11);doc.text('Paid on: '+new Date().toLocaleDateString('en-ZA'),70,155,{angle:-30});doc.setTextColor(0);} doc.setFontSize(24);doc.setFont(undefined,'bold');doc.text(useVAT?'TAX INVOICE':'INVOICE',20,25); doc.setDrawColor(37,99,235);doc.setLineWidth(0.5);doc.rect(20,55,90,45);doc.setFontSize(10);doc.setFont(undefined,'bold');doc.text(COMPANY.name,23,62);doc.setFont(undefined,'normal');doc.text(COMPANY.address,23,69);doc.text('Email: '+COMPANY.email,23,76);doc.text('Tel: '+COMPANY.phone,23,83);if(useVAT)doc.text('VAT: '+COMPANY.vat+' | Reg: '+COMPANY.reg,23,90);doc.text('Bank: '+COMPANY.bank+' Acc: '+COMPANY.acc,23,97);doc.rect(120,55,70,45);doc.setFont(undefined,'bold');doc.text('INVOICE NO:',123,62);doc.text('DATE:',123,69);doc.text('DUE DATE:',123,76);doc.setFont(undefined,'normal');doc.text(invNum,160,62);let today=new Date();let due=new Date(today);due.setDate(today.getDate()+7);doc.text(today.toLocaleDateString('en-ZA'),160,69);doc.text(due.toLocaleDateString('en-ZA'),160,76); doc.setFontSize(11);doc.setFont(undefined,'bold');doc.text('BILL TO:',20,115);doc.setFont(undefined,'normal');doc.text(client.name,20,122);if(clientPhone)doc.text('Tel 1: '+clientPhone,20,129); if(clientPhone2)doc.text('Tel 2: '+clientPhone2,20,136); if(clientEmail)doc.text('Email: '+clientEmail,20,143);if(clientAddress){let addr=doc.splitTextToSize('Address: '+clientAddress,90);doc.text(addr,20,150);} let y=170;doc.setFillColor(37,99,235);doc.rect(20,y,170,8,'F');doc.setTextColor(255,255,255);doc.setFont(undefined,'bold');doc.text('#',23,y+6);doc.text('DESCRIPTION',35,y+6);doc.text('AMOUNT',170,y+6);doc.setTextColor(0);y+=12;doc.setFont(undefined,'normal');items.forEach((it,idx)=>{doc.text(String(idx+1),23,y);let d=doc.splitTextToSize(it.desc,120);doc.text(d,35,y);doc.text('R'+it.price.toFixed(2),170,y);y+=d.length*5+3;doc.line(20,y,190,y);y+=5;}); y+=5;doc.text('Subtotal:',140,y);doc.text('R'+subtotal,170,y);y+=7;if(parseFloat(discount)>0){doc.setTextColor(220,38,38);doc.text('Discount:',140,y);doc.text('-R'+discount,170,y);doc.setTextColor(0);y+=7;} if(useVAT){doc.text('VAT 15%:',140,y);doc.text('R'+vat,170,y);y+=7;} doc.setLineWidth(0.8);doc.line(140,y,190,y);y+=5;doc.setFontSize(14);doc.setFont(undefined,'bold');doc.text('TOTAL DUE:',140,y);doc.text('R'+total,170,y); y+=20;if(notes){doc.setFontSize(10);doc.setFont(undefined,'bold');doc.text('NOTES / PAYMENT TERMS:',20,y);doc.setFont(undefined,'normal');let n=doc.splitTextToSize(notes,170);doc.text(n,20,y+7);} doc.setFontSize(8);doc.setTextColor(100);doc.line(20,280,190,280);doc.text('Thank you for choosing '+COMPANY.name+' - Twinz WIFI',105,287,{align:'center'}); 
+async function createPDF(invNum,client,clientEmail,clientAddress,clientPhone,clientPhone2,items,subtotal,discount,vat,total,useVAT,notes,isPaid){const { jsPDF }=window.jspdf; const doc=new jsPDF(); try{const logoImg=await fetch(COMPANY.logo).then(r=>r.blob()).then(b=>new Promise(r=>{let rd=new FileReader();rd.onload=()=>r(rd.result);rd.readAsDataURL(b);}));doc.addImage(logoImg,'JPEG',164,15,25,25);}catch(e){} if(isPaid){doc.setFontSize(50);doc.setTextColor(16,185,129);doc.text('PAID',65,140,{angle:-30});doc.setFontSize(11);doc.text('Paid on: '+new Date().toLocaleDateString('en-ZA'),70,155,{angle:-30});doc.setTextColor(0);} doc.setFontSize(24);doc.setFont(undefined,'bold');doc.text(useVAT?'TAX INVOICE':'INVOICE',20,25); doc.setDrawColor(37,99,235);doc.setLineWidth(0.5);doc.rect(20,55,90,45);doc.setFontSize(10);doc.setFont(undefined,'bold');doc.text(COMPANY.name,23,62);doc.setFont(undefined,'normal');doc.text(COMPANY.address,23,69);doc.text('Email: '+COMPANY.email,23,76);doc.text('Tel: '+COMPANY.phone,23,83);if(useVAT)doc.text('VAT: '+COMPANY.vat+' | Reg: '+COMPANY.reg,23,90);doc.text('Bank: '+COMPANY.bank+' Acc: '+COMPANY.acc,23,97);doc.rect(120,55,70,45);doc.setFont(undefined,'bold');doc.text('INVOICE NO:',123,62);doc.text('DATE:',123,69);doc.text('DUE DATE:',123,76);doc.setFont(undefined,'normal');doc.text(invNum,160,62);let today=new Date();let due=new Date(today);due.setDate(today.getDate()+7);doc.text(today.toLocaleDateString('en-ZA'),160,69);doc.text(due.toLocaleDateString('en-ZA'),160,76); doc.setFontSize(11);doc.setFont(undefined,'bold');doc.text('BILL TO:',20,115);doc.setFont(undefined,'normal');doc.text(client.name,20,122);if(clientPhone)doc.text('Tel 1: '+clientPhone,20,129); if(clientPhone2)doc.text('Tel 2: '+clientPhone2,20,136); if(clientEmail)doc.text('Email: '+clientEmail,20,143);if(clientAddress){let addr=doc.splitTextToSize('Address: '+clientAddress,90);doc.text(addr,20,150);} let y=170;doc.setFillColor(37,99,235);doc.rect(20,y,170,8,'F');doc.setTextColor(255,255,255);doc.setFont(undefined,'bold');doc.text('#',23,y+6);doc.text('DESCRIPTION',35,y+6);doc.text('AMOUNT',170,y+6);doc.setTextColor(0);y+=12;doc.setFont(undefined,'normal');items.forEach((it,idx)=>{doc.text(String(idx+1),23,y);let d=doc.splitTextToSize(it.desc,120);doc.text(d,35,y);doc.text('R'+it.price.toFixed(2),170,y);y+=d.length*5+3;doc.line(20,y,190,y);y+=5;}); y+=5;doc.text('Subtotal:',140,y);doc.text('R'+subtotal,170,y);y+=7;if(parseFloat(discount)>0){doc.setTextColor(220,38,38);doc.text('Discount:',140,y);doc.text('-R'+discount,170,y);doc.setTextColor(0);y+=7;} if(useVAT){doc.text('VAT 15%:',140,y);doc.text('R'+vat,170,y);y+=7;} doc.setLineWidth(0.8);doc.line(140,y,190,y);y+=5;doc.setFontSize(14);doc.setFont(undefined,'bold');doc.text('TOTAL DUE:',140,y);doc.text('R'+total,170,y); y+=20;if(notes){doc.setFontSize(10);doc.setFont(undefined,'bold');doc.text('NOTES / PAYMENT TERMS:',20,y);doc.setFont(undefined,'normal');let n=doc.splitTextToSize(notes,170);doc.text(n,20,y+7);} doc.setFontSize(8);doc.setTextColor(100);doc.line(20,280,190,280);doc.text('Thank you for choosing '+COMPANY.name+' - Twinz WIFI',105,287,{align:'center'});
   let fileName = invNum+'-'+client.name.replace(/\s/g,'_')+'.pdf';
   doc.save(fileName);
   doc.autoPrint();

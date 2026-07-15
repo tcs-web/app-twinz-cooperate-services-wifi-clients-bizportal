@@ -45,8 +45,8 @@ button{background:#2563eb;font-weight:700;cursor:pointer;touch-action: manipulat
 .inv-actions button{width:auto;padding:8px 12px;font-size:12px}
 .badge{padding:4px 8px;border-radius:6px;font-size:11px;font-weight:700}
 .badge-590{background:#16a34a}.badge-790{background:#0ea5e9}.badge-990{background:#ca8a04}.badge-1290{background:#dc2626}.badge-custom{background:#7c3aed}
-.file-item{background:#0a0a0a;padding:8px 10px;border-radius:8px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
-.file-item a{color:#60a5fa;text-decoration:none;font-size:13px}
+.file-item{background:#0a0a0a;padding:8px 10px;border-radius:8px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.file-item a{color:#60a5fa;text-decoration:none;font-size:13px;flex:1}
 </style>
 </head>
 <body>
@@ -85,8 +85,7 @@ button{background:#2563eb;font-weight:700;cursor:pointer;touch-action: manipulat
   <div class="hint">Type 072... or +27... We will fix it for WhatsApp</div>
   <div class="label">Client Email</div><input id="clientEmail" placeholder="client@email.com">
   <div class="label">Installation Address / Location</div><textarea id="clientAddress" rows="2" placeholder="Street, Suburb, Town"></textarea>
-  <div class="label">GPS Coordinates</div><input id="clientGPS" placeholder="Click 'Get GPS' or paste https://maps.google.com/...">
-  <button class="btn-blue" onclick="getGPS()">📍 Get Current GPS</button>
+  <div class="label">GPS Location Link</div><input id="clientGPS" placeholder="https://maps.google.com/...">
   <div class="label"><input type="checkbox" id="vatToggle" checked onchange="calc()"> Tax Invoice + VAT 15%</div>
   <div id="items" style="margin-top:16px"><div class="grid"><input placeholder="Service / Package" id="item0"><input type="number" placeholder="Amount R" id="price0" oninput="calc()"></div></div>
   <button onclick="addItem()">+ Add Item</button>
@@ -125,15 +124,15 @@ button{background:#2563eb;font-weight:700;cursor:pointer;touch-action: manipulat
 
     <div class="label">Contract PDF</div>
     <input type="file" id="contractUpload" accept=".pdf">
-    <div id="contractLink"></div>
+    <div id="contractLink" style="font-size:12px;color:#60a5fa;margin-bottom:10px"></div>
 
     <div class="label">Proof of Payment Upload</div>
     <input type="file" id="popUpload" accept=".pdf,.jpg,.jpeg,.png">
     <button class="btn-purple" onclick="uploadPOP()">+ Upload POP</button>
-    <div id="popList"></div>
+    <div id="popList" style="margin-top:10px"></div>
 
-    <button class="btn-green" onclick="saveClient()">Save Client</button>
-    <button class="btn-red" onclick="deleteClient()">Delete Client</button>
+    <button class="btn-green" onclick="saveClient()">Save</button>
+    <button class="btn-red" onclick="deleteClient()">Delete</button>
     <button class="btn-blue" onclick="closeModal()">Cancel</button>
   </div>
 </div>
@@ -162,21 +161,19 @@ function show(id){document.querySelectorAll('#app>.card').forEach(c=>c.classList
 
 function formatSA(wa){ let num = wa.replace(/\D/g,''); if(num.startsWith('0')) num = '27' + num.slice(1); if(num.startsWith('27')) return num; return num; }
 function getBadge(pkg){ if(pkg.includes('590')) return 'badge-590'; if(pkg.includes('790')) return 'badge-790'; if(pkg.includes('990')) return 'badge-990'; if(pkg.includes('1290')) return 'badge-1290'; return 'badge-custom'; }
-function getGPS(){ if(navigator.geolocation){ navigator.geolocation.getCurrentPosition(pos=>{clientGPS.value=`https://maps.google.com/?q=${pos.coords.latitude},${pos.coords.longitude}`}); } else alert('GPS not supported')}
 
 function loadData(){db.collection('twinz_clients').onSnapshot(s=>{clients=s.docs.map(d=>({id:d.id,...d.data()}));renderClients();loadSelect();}); db.collection('twinz_invoices').onSnapshot(s=>{invoices=s.docs.map(d=>({id:d.id,...d.data()}));renderInvoices();});}
 async function addClient(){let n=prompt('Client Name:'),w1=prompt('Phone Number 1:'),w2=prompt('Phone Number 2 - Backup:'),e=prompt('Client Email:'),a=prompt('Installation Address:'),p=prompt('Package R590/R790/R990/R1290:');if(n&&w1)await db.collection('twinz_clients').add({name:n,whatsapp:w1,whatsapp2:w2,email:e,address:a,gps:'',package:p||'R590',appLink:'',websiteLink:'',contractUrl:'',popFiles:[],portalId:Math.random().toString(36).substr(2,9)});}
-
-function renderClients(){clientList.innerHTML=clients.map(c=>`<div class="client-folder"><h3>${c.name} <span class="badge ${getBadge(c.package||'R590')}">${c.package||'R590'}</span></h3><div style="color:#9ca3af;font-size:13px;margin-bottom:10px">${c.whatsapp} ${c.whatsapp2?' | '+c.whatsapp2:''} | ${c.email}</div>${c.address?`<div style="color:#6b7280;font-size:12px;margin-bottom:10px">📍 ${c.address}</div>`:''}<div class="link-box">${c.appLink?`<a href="${c.appLink}" target="_blank">📡 Router</a>`:''}${c.gps?`<a href="${c.gps}" target="_blank">📍 GPS</a>`:''}${c.contractUrl?`<a href="${c.contractUrl}" target="_blank">📄 Contract</a>`:''}${c.popFiles&&c.popFiles.length>0?`<a href="#" onclick="viewPOP('${c.id}')">🧾 POP(${c.popFiles.length})</a>`:''}</div><div class="client-actions"><button class="btn-blue" onclick="editClient('${c.id}')">Edit Client</button></div></div>`).join('')||'<div>No clients</div>';}
-
+function renderClients(){clientList.innerHTML=clients.map(c=>`<div class="client-folder"><h3>${c.name} <span class="badge ${getBadge(c.package||'R590')}">${c.package||'R590'}</span></h3><div style="color:#9ca3af;font-size:13px;margin-bottom:10px">${c.whatsapp} ${c.whatsapp2?' | '+c.whatsapp2:''} | ${c.email}</div>${c.address?`<div style="color:#6b7280;font-size:12px;margin-bottom:10px">📍 ${c.address}</div>`:''}<div class="link-box">${c.appLink?`<a href="${c.appLink}" target="_blank">📡 Router</a>`:''}${c.gps?`<a href="${c.gps}" target="_blank">📍 GPS</a>`:''}${c.contractUrl?`<a href="${c.contractUrl}" target="_blank">📄 Contract</a>`:''}${c.popFiles&&c.popFiles.length>0?`<a href="#" onclick="alert('POP Files: ${c.popFiles.map(f=>f.name).join(', ')}')">🧾 POP(${c.popFiles.length})</a>`:''}</div><div class="client-actions"><button class="btn-blue" onclick="editClient('${c.id}')">Edit Client</button></div></div>`).join('')||'<div>No clients</div>';}
 function editClient(id){editingClientId=id; editingClientData=clients.find(c=>c.id==id); editName.value=editingClientData.name||''; editWhatsapp.value=editingClientData.whatsapp||''; editWhatsapp2.value=editingClientData.whatsapp2||''; editEmail.value=editingClientData.email||''; editAddress.value=editingClientData.address||''; editGPS.value=editingClientData.gps||''; editPackage.value=editingClientData.package||'R590'; editApp.value=editingClientData.appLink||''; editWebsite.value=editingClientData.websiteLink||'';
-contractLink.innerHTML = editingClientData.contractUrl? `<div class="file-item"><a href="${editingClientData.contractUrl}" target="_blank">View Contract</a><button class="btn-red" style="padding:4px 8px;font-size:11px" onclick="deleteContract()">Delete</button></div>` : 'No contract uploaded';
+contractLink.innerHTML = editingClientData.contractUrl? `<div class="file-item"><a href="${editingClientData.contractUrl}" target="_blank">View Contract</a><button class="btn-red" style="padding:4px 8px;font-size:11px;width:auto" onclick="deleteContract()">Delete</button></div>` : 'No contract uploaded';
 renderPOP(); editModal.classList.add('active');}
 function closeModal(e){if(!e||e.target.id==='editModal')editModal.classList.remove('active');}
 
 async function saveClient(){
   let data={name:editName.value,whatsapp:editWhatsapp.value,whatsapp2:editWhatsapp2.value,email:editEmail.value,address:editAddress.value,gps:editGPS.value,package:editPackage.value,appLink:editApp.value,websiteLink:editWebsite.value};
 
+  // UPLOAD CONTRACT PDF
   let file = contractUpload.files[0];
   if(file){
     let storageRef = storage.ref(`contracts/${editingClientId}_${Date.now()}_${file.name}`);
@@ -200,10 +197,9 @@ async function uploadPOP(){
 }
 
 function renderPOP(){
-  popList.innerHTML = (editingClientData.popFiles||[]).map((f,i)=>`<div class="file-item"><a href="${f.url}" target="_blank">${f.name}</a><button class="btn-red" style="padding:4px 8px;font-size:11px" onclick="deletePOP(${i})">X</button></div>`).join('');
+  popList.innerHTML = (editingClientData.popFiles||[]).map((f,i)=>`<div class="file-item"><a href="${f.url}" target="_blank">${f.name}</a><button class="btn-red" style="padding:4px 8px;font-size:11px;width:auto" onclick="deletePOP(${i})">X</button></div>`).join('');
 }
 async function deletePOP(i){ if(confirm('Delete this POP?')){ editingClientData.popFiles.splice(i,1); await db.collection('twinz_clients').doc(editingClientId).update({popFiles:editingClientData.popFiles}); renderPOP(); }}
-function viewPOP(id){ let c = clients.find(x=>x.id==id); alert(c.popFiles.map(f=>f.name).join('\n')) }
 
 async function deleteClient(){if(confirm('Delete client?')){await db.collection('twinz_clients').doc(editingClientId).delete(); closeModal();}}
 function loadSelect(){clientSelect.innerHTML='<option value="">Select Client...</option>'+clients.map(c=>`<option value="${c.id}">${c.name} - ${c.package}</option>`).join(''); clientSelect.onchange=()=>{let c=clients.find(x=>x.id==clientSelect.value); if(c){clientPhone.value=c.whatsapp||''; clientPhone2.value=c.whatsapp2||''; clientEmail.value=c.email||''; clientAddress.value=c.address||''; clientGPS.value=c.gps||''; item0.value='Monthly WiFi '+c.package; price0.value=c.package.replace('R',''); calc();}};}
@@ -227,9 +223,9 @@ async function genInvoice(){
 
 async function createPDF(invNum,client,clientEmail,clientAddress,clientGPS,clientPhone,clientPhone2,items,subtotal,discount,vat,total,useVAT,notes,isPaid){const { jsPDF }=window.jspdf; const doc=new jsPDF(); try{const logoImg=await fetch(COMPANY.logo).then(r=>r.blob()).then(b=>new Promise(r=>{let rd=new FileReader();rd.onload=()=>r(rd.result);rd.readAsDataURL(b);}));doc.addImage(logoImg,'JPEG',164,15,25,25);}catch(e){} if(isPaid){doc.setFontSize(50);doc.setTextColor(16,185,129);doc.text('PAID',65,140,{angle:-30});doc.setFontSize(11);doc.text('Paid on: '+new Date().toLocaleDateString('en-ZA'),70,155,{angle:-30});doc.setTextColor(0);} doc.setFontSize(24);doc.setFont(undefined,'bold');doc.text(useVAT?'TAX INVOICE':'INVOICE',20,25); doc.setDrawColor(37,99,235);doc.setLineWidth(0.5);doc.rect(20,55,90,45);doc.setFontSize(10);doc.setFont(undefined,'bold');doc.text(COMPANY.name,23,62);doc.setFont(undefined,'normal');doc.text(COMPANY.address,23,69);doc.text('Email: '+COMPANY.email,23,76);doc.text('Tel: '+COMPANY.phone,23,83);if(useVAT)doc.text('VAT: '+COMPANY.vat+' | Reg: '+COMPANY.reg,23,90);doc.text('Bank: '+COMPANY.bank+' Acc: '+COMPANY.acc,23,97);doc.rect(120,55,70,45);doc.setFont(undefined,'bold');doc.text('INVOICE NO:',123,62);doc.text('DATE:',123,69);doc.text('DUE DATE:',123,76);doc.setFont(undefined,'normal');doc.text(invNum,160,62);let today=new Date();let due=new Date(today);due.setDate(today.getDate()+7);doc.text(today.toLocaleDateString('en-ZA'),160,69);doc.text(due.toLocaleDateString('en-ZA'),160,76); doc.setFontSize(11);doc.setFont(undefined,'bold');doc.text('BILL TO:',20,115);doc.setFont(undefined,'normal');doc.text(client.name,20,122);if(clientPhone)doc.text('Tel 1: '+clientPhone,20,129); if(clientPhone2)doc.text('Tel 2: '+clientPhone2,20,136); if(clientEmail)doc.text('Email: '+clientEmail,20,143);if(clientAddress){let addr=doc.splitTextToSize('Address: '+clientAddress,90);doc.text(addr,20,150);} if(clientGPS){doc.text('GPS: '+clientGPS,20,160);} let y=175;doc.setFillColor(37,99,235);doc.rect(20,y,170,8,'F');doc.setTextColor(255,255,255);doc.setFont(undefined,'bold');doc.text('#',23,y+6);doc.text('DESCRIPTION',35,y+6);doc.text('AMOUNT',170,y+6);doc.setTextColor(0);y+=12;doc.setFont(undefined,'normal');items.forEach((it,idx)=>{doc.text(String(idx+1),23,y);let d=doc.splitTextToSize(it.desc,120);doc.text(d,35,y);doc.text('R'+it.price.toFixed(2),170,y);y+=d.length*5+3;doc.line(20,y,190,y);y+=5;}); y+=5;doc.text('Subtotal:',140,y);doc.text('R'+subtotal,170,y);y+=7;if(parseFloat(discount)>0){doc.setTextColor(220,38,38);doc.text('Discount:',140,y);doc.text('-R'+discount,170,y);doc.setTextColor(0);y+=7;} if(useVAT){doc.text('VAT 15%:',140,y);doc.text('R'+vat,170,y);y+=7;} doc.setLineWidth(0.8);doc.line(140,y,190,y);y+=5;doc.setFontSize(14);doc.setFont(undefined,'bold');doc.text('TOTAL DUE:',140,y);doc.text('R'+total,170,y); y+=20;if(notes){doc.setFontSize(10);doc.setFont(undefined,'bold');doc.text('NOTES / PAYMENT TERMS:',20,y);doc.setFont(undefined,'normal');let n=doc.splitTextToSize(notes,170);doc.text(n,20,y+7);} doc.setFontSize(8);doc.setTextColor(100);doc.line(20,280,190,280);doc.text('Thank you for choosing '+COMPANY.name+' - Twinz WIFI',105,287,{align:'center'});
   let fileName = invNum+'-'+client.name.replace(/\s/g,'_')+'.pdf';
-  doc.save(fileName); // DOWNLOAD
-  doc.autoPrint(); // PRINT
-  window.open(doc.output('bloburl'), '_blank');
+  doc.save(fileName); // 1. SAVE/DOWNLOAD
+  doc.autoPrint(); // 2. PRINT
+  window.open(doc.output('bloburl'), '_blank'); // 3. OPEN
 }
 
 async function deleteInvoice(id){if(confirm('Delete this invoice permanently?')){await db.collection('twinz_invoices').doc(id).delete();}}

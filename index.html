@@ -1,1 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Twinz WIFI V3.5.1</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+body{background:#0a0a0a;color:#f1f5f9;padding:16px;max-width:1000px;margin:0 auto}
+.card{background:#111827;border-radius:18px;padding:22px;margin-bottom:18px;border:1px solid #1f2937}
+h1{display:flex;align-items:center;gap:12px;color:#3b82f6;font-size:26px}
+h2{font-size:18px;margin-bottom:14px;color:#e5e7eb}
+.logo{width:48px;height:48px;border-radius:12px;border:2px solid #3b82f6;object-fit:cover}
+.sub{color:#9ca3af;font-size:13px;margin-bottom:18px}
+input,textarea,select,button{width:100%;padding:13px;border-radius:10px;border:1px solid #374151;background:#0a0a0a;color:#f1f5f9;margin-bottom:11px;font-size:16px}
+button{background:#2563eb;font-weight:700;cursor:pointer;touch-action: manipulation;}
+.btn-green{background:#16a34a}.btn-red{background:#dc2626}.btn-yellow{background:#ca8a04}.btn-blue{background:#0ea5e9}
+.hidden{display:none}.tabs{display:flex;gap:8px;margin-bottom:18px;overflow-x:auto}
+.tab{flex:1;min-width:110px;padding:11px;background:#1f2937;border-radius:10px;text-align:center;cursor:pointer;font-weight:600;font-size:14px;touch-action: manipulation;}
+.tab.active{background:#2563eb}
+.client-folder{background:#0f172a;border:1px solid #334155;border-radius:12px;padding:14px;margin-bottom:12px}
+.client-folder h3{color:#3b82f6;margin-bottom:8px;font-size:16px}
+.link-box{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.link-box a{flex:1;min-width:120px;background:#1e293b;padding:10px;border-radius:8px;text-decoration:none;color:#60a5fa;font-size:13px;text-align:center;border:1px solid #334155}
+.total-box{background:#1e3a8a;padding:16px;border-radius:12px;margin-top:12px}
+.logout-btn{background:#dc2626;width:auto;padding:10px 16px;font-size:13px;margin-left:auto}
+.top-bar{display:flex;align-items:center;margin-bottom:18px}
+.label{font-size:12px;color:#9ca3af;margin-bottom:4px;margin-top:8px}
+.modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);display:none;align-items:center;justify-content:center;z-index:999}
+.modal.active{display:flex}
+.modal-card{background:#111827;padding:24px;border-radius:16px;max-width:420px;width:90%;max-height:90vh;overflow-y:auto}
+.client-actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.client-actions button{padding:8px 12px;font-size:13px;width:auto}
+.grid{display:grid;grid-template-columns:2fr 1fr;gap:12px}
+.inv-row{display:flex;justify-content:space-between;align-items:center;padding:14px;background:#0a0a0a;border-radius:10px;margin-bottom:10px;border-left:4px solid #2563eb;gap:10px}
+.inv-info{flex:1}
+.status-paid{border-left-color:#16a34a}
+.hint{font-size:11px;color:#fbbf24;margin-top:-8px;margin-bottom:8px}
+.inv-actions{display:flex;gap:6px}
+.inv-actions button{width:auto;padding:8px 12px;font-size:12px}
+.badge{padding:4px 8px;border-radius:6px;font-size:11px;font-weight:700}
+.badge-590{background:#16a34a}.badge-790{background:#0ea5e9}.badge-990{background:#ca8a04}.badge-1290{background:#dc2626}.badge-custom{background:#7c3aed}
+</style>
+</head>
+<body>
 
+<div id="login" class="card">
+  <h1><img src="https://files.catbox.moe/0zympr.jpeg" class="logo"> Twinz WIFI Admin</h1>
+  <input type="email" id="email" value="twinz.cooperate.services@gmail.com">
+  <input type="password" id="pass" placeholder="Password">
+  <button id="loginBtn" class="btn-green">Login</button>
+  <div id="err" style="color:#dc2626;font-weight:700;margin-top:8px"></div>
+</div>
+
+<div id="app" class="hidden">
+<div class="top-bar"><h1><img src="https://files.catbox.moe/0zympr.jpeg" class="logo"> Twinz WIFI V3.5.1</h1><button id="logoutBtn" class="logout-btn">Logout</button></div>
+<div class="sub">ISP & WiFi Solutions | VAT: 9819040198</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="show('clients')">Clients</div>
+  <div class="tab" onclick="show('inv')">New Invoice</div>
+  <div class="tab" onclick="show('list')">Invoices</div>
+</div>
+
+<div id="clients" class="card">
+  <h2>WiFi Client Portal</h2>
+  <button class="btn-yellow" onclick="addClient()">+ Add WiFi Client</button>
+  <div id="clientList"></div>
+</div>
+
+<div id="inv" class="card hidden">
+  <h2>Create Invoice</h2>
+  <select id="clientSelect"><option value="">Select Client...</option></select>
+  <div class="label">Client Number 1 - With Country Code</div>
+  <input id="clientPhone" placeholder="+27 or 07...">
+  <div class="label">Client Number 2 - Backup</div>
+  <input id="clientPhone2" placeholder="+27 or 07...">
+  <div class="hint">Type 072... or +27... We will fix it for WhatsApp</div>
+  <div class="label">Client Email</div><input id="clientEmail" placeholder="client@email.com">
+  <div class="label">Installation Address / Location</div><textarea id="clientAddress" rows="2" placeholder="Street, Suburb, Town, GPS Link"></textarea>
+  <div class="label"><input type="checkbox" id="vatToggle" checked onchange="calc()"> Tax Invoice + VAT 15%</div>
+  <div id="items" style="margin-top:16px"><div class="grid"><input placeholder="Service / Package" id="item0"><input type="number" placeholder="Amount R" id="price0" oninput="calc()"></div></div>
+  <button onclick="addItem()">+ Add Item</button>
+  <div class="label">Discount R</div><input type="number" id="discount" value="0" placeholder="Enter discount amount" oninput="calc()">
+  <div class="label">Notes / Payment Terms</div><textarea id="notes" rows="2">Monthly WiFi Subscription. Payment due by 1st of each month.</textarea>
+  <div class="total-box">
+    <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span>Subtotal:</span><span>R<span id="subtotal">0.00</span></span></div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:8px;color:#fbbf24"><span>Discount:</span><span>-R<span id="discountShow">0.00</span></span></div>
+    <div id="vatRow" style="display:flex;justify-content:space-between;margin-bottom:8px"><span>VAT 15%:</span><span>R<span id="vat">0.00</span></span></div>
+    <div style="display:flex;justify-content:space-between;font-size:20px;font-weight:700"><span>TOTAL DUE:</span><span>R<span id="total">0.00</span></span></div>
+  </div>
+  <button class="btn-green" style="margin-top:16px" onclick="genInvoice()">Generate PDF + Print + WhatsApp</button>
+</div>
+
+<div id="list" class="card hidden"><h2>All Invoices</h2><div id="invoiceList"></div></div>
+
+<div id="editModal" class="modal" onclick="closeModal(event)">
+  <div class="modal-card" onclick="event.stopPropagation()">
+    <h2>Edit WiFi Client</h2>
+    <div class="label">Client Name</div><input id="editName">
+    <div class="label">Phone Number 1</div><input id="editWhatsapp">
+    <div class="label">Phone Number 2 - Backup</div><input id="editWhatsapp2">
+    <div class="hint">Save as 072... or +27... Both work</div>
+    <div class="label">Email</div><input id="editEmail">
+    <div class="label">Installation Address / Location</div><textarea id="editAddress" rows="2"></textarea>
+    <div class="label">Package</div>
+    <select id="editPackage">
+      <option value="R590">R590 - 10Mbps</option>
+      <option value="R790">R790 - 20Mbps</option>
+      <option value="R990">R990 - 30Mbps</option>
+      <option value="R1290">R1290 - 50Mbps</option>
+      <option value="Custom">Custom Package</option>
+    </select>
+    <div class="label">Router Link / Portal</div><input id="editApp" placeholder="http://192.168.1.1 or client portal link">
+    <div class="label">GPS Location Link</div><input id="editWebsite" placeholder="https://maps.google.com/...">
+    <button class="btn-green" onclick="saveClient()">Save</button>
+    <button class="btn-red" onclick="deleteClient()">Delete</button>
+    <button class="btn-blue" onclick="closeModal()">Cancel</button>
+  </div>
+</div>
+
+</div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBJP71gaIqvJi2QZSJBIWEMMzda2jhcpW8",
+  authDomain: "twinz-app-and-web-specialist.firebaseapp.com",
+  projectId: "twinz-app-and-web-specialist",
+  storageBucket: "twinz-app-and-web-specialist.firebasestorage.app",
+  messagingSenderId: "457882091771",
+  appId: "1:457882091771:web:9e6b54ca264c6c2803f05e"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth(); const db = firebase.firestore(); const storage = firebase.storage();
+
+let clients=[],invoices=[],itemCount=1, editingClientId=null, editingClientData=null;
+const COMPANY={name:'Twinz Cooperate Services Pty Ltd', address:'Office Burgersfort Praktiseer Ext 02', email:'twinz.cooperate.services@gmail.com', phone:'068 254 7352 / 069 894 9596', vat:'9819040198', reg:'2024/444303/07', bank:'Standard Bank', acc:'10 26 459 443 4', branch:'006145', logo:'https://files.catbox.moe/0zympr.jpeg'};
+
+auth.onAuthStateChanged(u=>{if(u){login.classList.add('hidden');app.classList.remove('hidden');loadData();}else{login.classList.remove('hidden');app.classList.add('hidden');}});
+loginBtn.onclick=async()=>{err.textContent='Logging in...';try{await auth.signInWithEmailAndPassword(email.value.trim(),pass.value)}catch(e){err.textContent='ERROR: '+e.code}};
+logoutBtn.onclick=()=>auth.signOut();
+function show(id){document.querySelectorAll('#app>.card').forEach(c=>c.classList.add('hidden'));document.getElementById(id).classList.remove('hidden');document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));event.target.classList.add('active');}
+
+function formatSA(wa){ let num = wa.replace(/\D/g,''); if(num.startsWith('0')) num = '27' + num.slice(1); if(num.startsWith('27')) return num; return num; }
+function getBadge(pkg){ if(pkg.includes('590')) return 'badge-590'; if(pkg.includes('790')) return 'badge-790'; if(pkg.includes('990')) return 'badge-990'; if(pkg.includes('1290')) return 'badge-1290'; return 'badge-custom'; }
+
+function loadData(){db.collection('twinz_clients').onSnapshot(s=>{clients=s.docs.map(d=>({id:d.id,...d.data()}));renderClients();loadSelect();}); db.collection('twinz_invoices').onSnapshot(s=>{invoices=s.docs.map(d=>({id:d.id,...d.data()}));renderInvoices();});}
+async function addClient(){let n=prompt('Client Name:'),w1=prompt('Phone Number 1:'),w2=prompt('Phone Number 2 - Backup:'),e=prompt('Client Email:'),a=prompt('Installation Address:'),p=prompt('Package R590/R790/R990/R1290:');if(n&&w1)await db.collection('twinz_clients').add({name:n,whatsapp:w1,whatsapp2:w2,email:e,address:a,package:p||'R590',appLink:'',websiteLink:'',portalId:Math.random().toString(36).substr(2,9)});}
+function renderClients(){clientList.innerHTML=clients.map(c=>`<div class="client-folder"><h3>${c.name} <span class="badge ${getBadge(c.package||'R590')}">${c.package||'R590'}</span></h3><div style="color:#9ca3af;font-size:13px;margin-bottom:10px">${c.whatsapp} ${c.whatsapp2?' | '+c.whatsapp2:''} | ${c.email}</div>${c.address?`<div style="color:#6b7280;font-size:12px;margin-bottom:10px">📍 ${c.address}</div>`:''}<div class="link-box">${c.appLink?`<a href="${c.appLink}" target="_blank">📡 Router</a>`:''}${c.websiteLink?`<a href="${c.websiteLink}" target="_blank">📍 GPS</a>`:''}</div><div class="client-actions"><button class="btn-blue" onclick="editClient('${c.id}')">Edit Client</button></div></div>`).join('')||'<div>No clients</div>';}
+function editClient(id){editingClientId=id; editingClientData=clients.find(c=>c.id==id); editName.value=editingClientData.name||''; editWhatsapp.value=editingClientData.whatsapp||''; editWhatsapp2.value=editingClientData.whatsapp2||''; editEmail.value=editingClientData.email||''; editAddress.value=editingClientData.address||''; editPackage.value=editingClientData.package||'R590'; editApp.value=editingClientData.appLink||''; editWebsite.value=editingClientData.websiteLink||''; editModal.classList.add('active');}
+function closeModal(e){if(!e||e.target.id==='editModal')editModal.classList.remove('active');}
+async function saveClient(){let data={name:editName.value,whatsapp:editWhatsapp.value,whatsapp2:editWhatsapp2.value,email:editEmail.value,address:editAddress.value,package:editPackage.value,appLink:editApp.value,websiteLink:editWebsite.value}; if(data.name&&data.whatsapp){await db.collection('twinz_clients').doc(editingClientId).update(data); closeModal();}}
+async function deleteClient(){if(confirm('Delete client?')){await db.collection('twinz_clients').doc(editingClientId).delete(); closeModal();}}
+function loadSelect(){clientSelect.innerHTML='<option value="">Select Client...</option>'+clients.map(c=>`<option value="${c.id}">${c.name} - ${c.package}</option>`).join(''); clientSelect.onchange=()=>{let c=clients.find(x=>x.id==clientSelect.value); if(c){clientPhone.value=c.whatsapp||''; clientPhone2.value=c.whatsapp2||''; clientEmail.value=c.email||''; clientAddress.value=c.address||''; item0.value='Monthly WiFi '+c.package; price0.value=c.package.replace('R',''); calc();}};}
+function addItem(){items.insertAdjacentHTML('beforeend',`<div class="grid"><input placeholder="Service / Description" id="item${itemCount}"><input type="number" placeholder="Amount R" id="price${itemCount}" oninput="calc()"></div>`);itemCount++;}
+function calc(){let s=0;for(let i=0;i<itemCount;i++)s+=parseFloat(document.getElementById('price'+i)?.value||0);let d=parseFloat(discount.value||0);let after=s-d;if(after<0)after=0; let v=vatToggle.checked?after*0.15:0; vatRow.style.display=vatToggle.checked?'flex':'none'; subtotal.textContent=s.toFixed(2); discountShow.textContent=d.toFixed(2); vat.textContent=v.toFixed(2); total.textContent=(after+v).toFixed(2);}
+
+async function genInvoice(){
+  let cid=clientSelect.value;if(!cid)return alert('Select client first'); 
+  let c=clients.find(x=>x.id==cid); 
+  let phone = clientPhone.value || c.whatsapp; 
+  if(!phone) return alert('Enter Client Number 1');
+  let num='TCS-'+new Date().getFullYear()+'-'+String(invoices.length+1).padStart(4,'0'); 
+  let itemsArr=[]; for(let i=0;i<itemCount;i++){let desc=document.getElementById('item'+i)?.value; let price=document.getElementById('price'+i)?.value; if(desc&&price)itemsArr.push({desc,price:parseFloat(price)});} 
+  await createPDF(num,c,clientEmail.value,clientAddress.value,phone,clientPhone2.value,itemsArr,subtotal.textContent,discount.value,vat.textContent,total.textContent,vatToggle.checked,notes.value,false);
+  await db.collection('twinz_invoices').add({num,clientId:cid,clientName:c.name,clientPhone:phone,clientPhone2:clientPhone2.value,items:itemsArr,subtotal:parseFloat(subtotal.textContent),discount:parseFloat(discount.value),vat:parseFloat(vat.textContent),total:parseFloat(total.textContent),useVAT:vatToggle.checked,notes:notes.value,status:'unpaid',date:new Date().toISOString()}); 
+  let waNum = formatSA(phone); 
+  let msg=`Hi ${c.name},\n\n${vatToggle.checked?'TAX INVOICE':'INVOICE'} ${num}\nPackage: ${c.package}\nTotal: R${total.textContent}\nThank you for using Twinz WIFI!`; 
+  window.open(`https://wa.me/${waNum}/?text=${encodeURIComponent(msg)}`); 
+  alert('PDF Downloaded + Print Opened + WhatsApp Opened');
+}
+
+// FIX: DOWNLOAD + AUTO PRINT
+async function createPDF(invNum,client,clientEmail,clientAddress,clientPhone,clientPhone2,items,subtotal,discount,vat,total,useVAT,notes,isPaid){const { jsPDF }=window.jspdf; const doc=new jsPDF(); try{const logoImg=await fetch(COMPANY.logo).then(r=>r.blob()).then(b=>new Promise(r=>{let rd=new FileReader();rd.onload=()=>r(rd.result);rd.readAsDataURL(b);}));doc.addImage(logoImg,'JPEG',164,15,25,25);}catch(e){} if(isPaid){doc.setFontSize(50);doc.setTextColor(16,185,129);doc.text('PAID',65,140,{angle:-30});doc.setFontSize(11);doc.text('Paid on: '+new Date().toLocaleDateString('en-ZA'),70,155,{angle:-30});doc.setTextColor(0);} doc.setFontSize(24);doc.setFont(undefined,'bold');doc.text(useVAT?'TAX INVOICE':'INVOICE',20,25); doc.setDrawColor(37,99,235);doc.setLineWidth(0.5);doc.rect(20,55,90,45);doc.setFontSize(10);doc.setFont(undefined,'bold');doc.text(COMPANY.name,23,62);doc.setFont(undefined,'normal');doc.text(COMPANY.address,23,69);doc.text('Email: '+COMPANY.email,23,76);doc.text('Tel: '+COMPANY.phone,23,83);if(useVAT)doc.text('VAT: '+COMPANY.vat+' | Reg: '+COMPANY.reg,23,90);doc.text('Bank: '+COMPANY.bank+' Acc: '+COMPANY.acc,23,97);doc.rect(120,55,70,45);doc.setFont(undefined,'bold');doc.text('INVOICE NO:',123,62);doc.text('DATE:',123,69);doc.text('DUE DATE:',123,76);doc.setFont(undefined,'normal');doc.text(invNum,160,62);let today=new Date();let due=new Date(today);due.setDate(today.getDate()+7);doc.text(today.toLocaleDateString('en-ZA'),160,69);doc.text(due.toLocaleDateString('en-ZA'),160,76); doc.setFontSize(11);doc.setFont(undefined,'bold');doc.text('BILL TO:',20,115);doc.setFont(undefined,'normal');doc.text(client.name,20,122);if(clientPhone)doc.text('Tel 1: '+clientPhone,20,129); if(clientPhone2)doc.text('Tel 2: '+clientPhone2,20,136); if(clientEmail)doc.text('Email: '+clientEmail,20,143);if(clientAddress){let addr=doc.splitTextToSize('Address: '+clientAddress,90);doc.text(addr,20,150);} let y=170;doc.setFillColor(37,99,235);doc.rect(20,y,170,8,'F');doc.setTextColor(255,255,255);doc.setFont(undefined,'bold');doc.text('#',23,y+6);doc.text('DESCRIPTION',35,y+6);doc.text('AMOUNT',170,y+6);doc.setTextColor(0);y+=12;doc.setFont(undefined,'normal');items.forEach((it,idx)=>{doc.text(String(idx+1),23,y);let d=doc.splitTextToSize(it.desc,120);doc.text(d,35,y);doc.text('R'+it.price.toFixed(2),170,y);y+=d.length*5+3;doc.line(20,y,190,y);y+=5;}); y+=5;doc.text('Subtotal:',140,y);doc.text('R'+subtotal,170,y);y+=7;if(parseFloat(discount)>0){doc.setTextColor(220,38,38);doc.text('Discount:',140,y);doc.text('-R'+discount,170,y);doc.setTextColor(0);y+=7;} if(useVAT){doc.text('VAT 15%:',140,y);doc.text('R'+vat,170,y);y+=7;} doc.setLineWidth(0.8);doc.line(140,y,190,y);y+=5;doc.setFontSize(14);doc.setFont(undefined,'bold');doc.text('TOTAL DUE:',140,y);doc.text('R'+total,170,y); y+=20;if(notes){doc.setFontSize(10);doc.setFont(undefined,'bold');doc.text('NOTES / PAYMENT TERMS:',20,y);doc.setFont(undefined,'normal');let n=doc.splitTextToSize(notes,170);doc.text(n,20,y+7);} doc.setFontSize(8);doc.setTextColor(100);doc.line(20,280,190,280);doc.text('Thank you for choosing '+COMPANY.name+' - Twinz WIFI',105,287,{align:'center'}); 
+  let fileName = invNum+'-'+client.name.replace(/\s/g,'_')+'.pdf';
+  doc.save(fileName);
+  doc.autoPrint();
+  window.open(doc.output('bloburl'), '_blank');
+}
+
+async function deleteInvoice(id){if(confirm('Delete this invoice permanently?')){await db.collection('twinz_invoices').doc(id).delete();}}
+function renderInvoices(){invoiceList.innerHTML=invoices.sort((a,b)=>new Date(b.date)-new Date(a.date)).map(i=>`<div class="inv-row ${i.status==='paid'?'status-paid':''}"><div class="inv-info">${i.num} - ${i.clientName}<br><small style="color:#9ca3af">${i.clientPhone||''} | R${i.total} | ${new Date(i.date).toLocaleDateString('en-ZA')} | ${i.status}</small></div><div class="inv-actions"><button class="btn-red" onclick="deleteInvoice('${i.id}')">Delete</button></div></div>`).join('')||'<div>No invoices yet</div>';}
+</script>
+</body>
+</html>

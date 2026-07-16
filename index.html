@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Twinz WIFI V3.5.3</title>
+<title>Twinz WIFI V3.5.4</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -60,7 +60,7 @@ button{background:#2563eb;font-weight:700;cursor:pointer;touch-action: manipulat
 </div>
 
 <div id="app" class="hidden">
-<div class="top-bar"><h1><img src="https://files.catbox.moe/0zympr.jpeg" class="logo"> Twinz WIFI V3.5.3</h1><button id="logoutBtn" class="logout-btn">Logout</button></div>
+<div class="top-bar"><h1><img src="https://files.catbox.moe/0zympr.jpeg" class="logo"> Twinz WIFI V3.5.4</h1><button id="logoutBtn" class="logout-btn">Logout</button></div>
 <div class="sub">ISP & WiFi Solutions | VAT: 9819040198</div>
 
 <div class="tabs">
@@ -102,7 +102,6 @@ button{background:#2563eb;font-weight:700;cursor:pointer;touch-action: manipulat
 
 <div id="list" class="card hidden"><h2>All Invoices</h2><div id="invoiceList"></div></div>
 
-<!-- FIXED EDIT MODAL -->
 <div id="editModal" class="modal" onclick="closeModal(event)">
   <div class="modal-card" onclick="event.stopPropagation()">
     <h2>Edit WiFi Client</h2>
@@ -167,22 +166,58 @@ function getBadge(pkg){ if(pkg.includes('590')) return 'badge-590'; if(pkg.inclu
 function loadData(){db.collection('twinz_clients').onSnapshot(s=>{clients=s.docs.map(d=>({id:d.id,...d.data()}));renderClients();loadSelect();}); db.collection('twinz_invoices').onSnapshot(s=>{invoices=s.docs.map(d=>({id:d.id,...d.data()}));renderInvoices();});}
 async function addClient(){let n=prompt('Client Name:'),w1=prompt('Phone Number 1:'),w2=prompt('Phone Number 2 - Backup:'),e=prompt('Client Email:'),a=prompt('Installation Address:'),p=prompt('Package R590/R790/R990/R1290:');if(n&&w1)await db.collection('twinz_clients').add({name:n,whatsapp:w1,whatsapp2:w2,email:e,address:a,gps:'',package:p||'R590',appLink:'',websiteLink:'',contractUrl:'',popFiles:[],portalId:Math.random().toString(36).substr(2,9)});}
 function renderClients(){clientList.innerHTML=clients.map(c=>`<div class="client-folder"><h3>${c.name} <span class="badge ${getBadge(c.package||'R590')}">${c.package||'R590'}</span></h3><div style="color:#9ca3af;font-size:13px;margin-bottom:10px">${c.whatsapp} ${c.whatsapp2?' | '+c.whatsapp2:''} | ${c.email}</div>${c.address?`<div style="color:#6b7280;font-size:12px;margin-bottom:10px">📍 ${c.address}</div>`:''}<div class="link-box">${c.appLink?`<a href="${c.appLink}" target="_blank">📡 Router</a>`:''}${c.gps?`<a href="${c.gps}" target="_blank">📍 GPS</a>`:''}${c.contractUrl?`<a href="${c.contractUrl}" target="_blank">📄 Contract</a>`:''}${c.popFiles&&c.popFiles.length>0?`<a href="#" onclick="alert('POP Files: ${c.popFiles.map(f=>f.name).join(', ')}')">🧾 POP(${c.popFiles.length})</a>`:''}</div><div class="client-actions"><button class="btn-blue" onclick="editClient('${c.id}')">Edit Client</button></div></div>`).join('')||'<div>No clients</div>';}
-function editClient(id){editingClientId=id; editingClientData=clients.find(c=>c.id==id); editName.value=editingClientData.name||''; editWhatsapp.value=editingClientData.whatsapp||''; editWhatsapp2.value=editingClientData.whatsapp2||''; editEmail.value=editingClientData.email||''; editAddress.value=editingClientData.address||''; editGPS.value=editingClientData.gps||''; editPackage.value=editingClientData.package||'R590'; editApp.value=editingClientData.appLink||''; editWebsite.value=editingClientData.websiteLink||'';
-contractLink.innerHTML = editingClientData.contractUrl? `<div class="file-item"><a href="${editingClientData.contractUrl}" target="_blank">View Contract</a><button class="btn-red" style="padding:4px 8px;font-size:11px;width:auto" onclick="deleteContract()">Delete</button></div>` : 'No contract uploaded';
-renderPOP(); editModal.classList.add('active');}
-function closeModal(e){if(!e||e.target.id==='editModal')editModal.classList.remove('active');}
+
+function editClient(id){
+  editingClientId=id;
+  editingClientData=clients.find(c=>c.id==id);
+  editName.value=editingClientData.name||'';
+  editWhatsapp.value=editingClientData.whatsapp||'';
+  editWhatsapp2.value=editingClientData.whatsapp2||'';
+  editEmail.value=editingClientData.email||'';
+  editAddress.value=editingClientData.address||'';
+  editGPS.value=editingClientData.gps||'';
+  editPackage.value=editingClientData.package||'R590';
+  editApp.value=editingClientData.appLink||'';
+  editWebsite.value=editingClientData.websiteLink||'';
+  contractUpload.value = '';
+  contractLink.innerHTML = editingClientData.contractUrl? `<div class="file-item"><a href="${editingClientData.contractUrl}" target="_blank">View Contract</a><button class="btn-red" style="padding:4px 8px;font-size:11px;width:auto" onclick="deleteContract()">Delete</button></div>` : 'No contract uploaded';
+  renderPOP();
+  editModal.classList.add('active');
+}
+function closeModal(e){if(!e||e.target.id==='editModal'){editModal.classList.remove('active'); contractUpload.value='';}}
 
 async function saveClient(){
-  let data={name:editName.value,whatsapp:editWhatsapp.value,whatsapp2:editWhatsapp2.value,email:editEmail.value,address:editAddress.value,gps:editGPS.value,package:editPackage.value,appLink:editApp.value,websiteLink:editWebsite.value};
+  try{
+    let data={
+      name:editName.value,
+      whatsapp:editWhatsapp.value,
+      whatsapp2:editWhatsapp2.value,
+      email:editEmail.value,
+      address:editAddress.value,
+      gps:editGPS.value,
+      package:editPackage.value,
+      appLink:editApp.value,
+      websiteLink:editWebsite.value,
+      contractUrl: editingClientData.contractUrl || '', // KEEP OLD CONTRACT IF NO NEW FILE
+      popFiles: editingClientData.popFiles || []
+    };
 
-  let file = contractUpload.files[0];
-  if(file){
-    let storageRef = storage.ref(`contracts/${editingClientId}_${Date.now()}_${file.name}`);
-    await storageRef.put(file);
-    data.contractUrl = await storageRef.getDownloadURL();
+    if(!data.name ||!data.whatsapp) return alert('Name and Phone 1 are required');
+
+    let file = contractUpload.files[0];
+    if(file){
+      let storageRef = storage.ref(`contracts/${editingClientId}_${Date.now()}_${file.name}`);
+      await storageRef.put(file);
+      data.contractUrl = await storageRef.getDownloadURL();
+    }
+
+    await db.collection('twinz_clients').doc(editingClientId).update(data);
+    closeModal();
+    alert('Client Saved!');
+  }catch(e){
+    alert('Save Error: '+e.message);
+    console.log(e);
   }
-
-  if(data.name&&data.whatsapp){await db.collection('twinz_clients').doc(editingClientId).update(data); closeModal(); alert('Client Saved!');}
 }
 
 async function deleteContract(){ if(confirm('Delete contract?')){ await db.collection('twinz_clients').doc(editingClientId).update({contractUrl:''}); editClient(editingClientId); }}
@@ -194,7 +229,7 @@ async function uploadPOP(){
   let url = await storageRef.getDownloadURL();
   let pops = editingClientData.popFiles || []; pops.push({name:file.name, url:url, date:new Date().toISOString()});
   await db.collection('twinz_clients').doc(editingClientId).update({popFiles:pops});
-  editingClientData.popFiles = pops; renderPOP(); alert('POP Uploaded!');
+  editingClientData.popFiles = pops; renderPOP(); popUpload.value=''; alert('POP Uploaded!');
 }
 
 function renderPOP(){
